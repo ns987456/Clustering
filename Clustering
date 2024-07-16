@@ -1,0 +1,125 @@
+## install.packages("xlsReadWrite")
+## install.packages("xlsx")
+## install.packages("XLConnect")
+## install.packages("pvclust")
+
+
+library(XLConnect)
+library(cluster) 
+library(fpc)
+library(pvclust)
+
+data =read.table("C:/Users/N/Desktop/CLUSTER-DATA.txt",header=TRUE)
+data =read.table("C:/Users/N/Desktop/data.txt",header=TRUE)
+
+names(data)
+##colnames(x) <- c("x", "y")
+mydatas=cbind(data[,2:4],data[,6])
+mydatas=data[,c(2:4,6)]
+
+
+# Determine number of clusters
+wss <- (nrow(mydatas)-1)*sum(apply(mydatas,2,var))
+for (i in 2:15) wss[i] <- sum(kmeans(mydatas, 
+   centers=i)$withinss)
+plot(1:15, wss, type="b", xlab="Number of Clusters",
+  ylab="Within groups sum of squares") 
+
+
+### CLUSTERING WITH P-VALUE
+fit <- pvclust(t(mydatas[,-1]), method.hclust="ward", method.dist="euclidean")
+plot(fit)
+pvrect(fit, alpha=0.95)
+
+
+# K-Means Cluster Analysis
+fit1 <- kmeans(mydatas, 5) # 5 cluster solution
+plot(mydatas, col = fit1$cluster)
+clusplot(mydatas, fit1$cluster, color=TRUE, shade=TRUE, 
+   labels=2, lines=0)
+plotcluster(mydatas, fit1$cluster)
+#### 
+plot(mydatas, col = fit1$cluster)
+points(fit1$centers, col = 1:2, pch = 8, cex = 2)
+####
+## cluster centers "fitted" to each obs.:
+fitted.x <- fitted(fit1);  head(fitted.x)
+resid.x <- x - fitted(fit1)
+# get cluster means 
+aggregate(mydatas,by=list(fit1$cluster),FUN=mean)
+# append cluster assignment
+mydata1 <- data.frame(data, fit1$cluster) 
+## output
+writeWorksheetToFile(file = "C:/Users/N/Desktop/clusterk.xlsx", data = mydata1, sheet = "Sheet1")
+
+
+
+# Ward Hierarchical Clustering
+d <- dist(mydatas, method = "euclidean") # distance matrix
+fit2 <- hclust(d, method="ward") 
+groups <- cutree(fit2, k=5) # cut tree into 5 clusters
+mydata2 =  data.frame(data, groups)
+summary(fit2)
+clusplot(mydatas, groups, color=TRUE, shade=TRUE, 
+   labels=2, lines=0)
+plotcluster(mydatas, groups) 
+ 
+plot(mydatas, col = groups)
+plot(fit2)
+plot(fit2,col = fit2$cluster) # display dendogram
+# draw dendogram with red borders around the 5 clusters 
+# rect.hclust(fit2, k=5, border="red") 
+## cluster centers "fitted" to each obs.:
+fitted.x <- fitted(fit1);  head(fitted.x)
+resid.x <- x - fitted(fit1)
+
+writeWorksheetToFile(file = "C:/Users/N/Desktop/clusterw.xlsx", data = mydata2, sheet = "Sheet1")
+
+
+
+#### Kohonen Clustering
+## install.packages("kohonen")
+
+library(MASS)
+library(kohonen)
+
+data =read.table("C:/Users/N/Desktop/CLUSTER-DATA.txt",header=TRUE)
+mydatas=data[,c(2:4,6)]
+data.s <- scale(mydatas)
+set.seed(7)
+data.som <- som(data = data.s, grid = somgrid(2, 3, "hexagonal"))
+plot(data.som, main = "Wine data")
+
+data.frame(mydatas,data.som$grid)
+predict(data.som, newdata=data.s)
+
+ set.seed(13)
+ nir.xyf <- xyf(data = mydatas,Y = composition[,2],xweight = 0.5,grid = somgrid(3, 2, "hexagonal"))
+ par(mfrow = c(1, 2))
+ plot(nir.xyf, type = "counts", main = "NIR data: counts")
+plot(nir.xyf, type = "quality", main = "NIR data: mapping quality")
+
+names(spectra)
+
+
+
+### Wine example
+data(wines)
+set.seed(7)
+training <- sample(nrow(wines), 120)
+Xtraining <- scale(wines[training,])
+Xtest <- scale(wines[-training,],
+center = attr(Xtraining, "scaled:center"),
+scale = attr(Xtraining, "scaled:scale"))
+xyf.wines <- xyf(Xtraining,
+factor(wine.classes[training]),
+grid = somgrid(5, 5, "hexagonal"))
+xyf.prediction <- predict(xyf.wines, newdata=Xtest)
+table(wine.classes[-training], xyf.prediction$prediction)
+
+
+
+
+
+
+
