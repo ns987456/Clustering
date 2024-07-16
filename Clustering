@@ -99,23 +99,7 @@ predict(data.som, newdata=data.s)
  plot(nir.xyf, type = "counts", main = "NIR data: counts")
 plot(nir.xyf, type = "quality", main = "NIR data: mapping quality")
 
-names(spectra)
 
-
-
-### Wine example
-data(wines)
-set.seed(7)
-training <- sample(nrow(wines), 120)
-Xtraining <- scale(wines[training,])
-Xtest <- scale(wines[-training,],
-center = attr(Xtraining, "scaled:center"),
-scale = attr(Xtraining, "scaled:scale"))
-xyf.wines <- xyf(Xtraining,
-factor(wine.classes[training]),
-grid = somgrid(5, 5, "hexagonal"))
-xyf.prediction <- predict(xyf.wines, newdata=Xtest)
-table(wine.classes[-training], xyf.prediction$prediction)
 
 
 
